@@ -6,18 +6,19 @@ public class GameMusic : MonoBehaviour
     #region VARS AND REFS
     public static GameMusic instance;
 
-    public AudioSource MusicNone;
-    public AudioSource MusicDanger;
-    public AudioSource MusicAction;
-
+    public AudioSource Music1;
+    public AudioSource Music2;
     public AudioClip DeathMusic;
 
+    [System.NonSerialized]
+    public bool ingozi = false;
+
     public float MaxVolume = 1;
-    public float MusicFadeSpeed = 5;
+    public float musicFadeSpeed = 5;
 
-    private enum MusicState { None, Action, Danger }
-    private MusicState currentState = MusicState.None;
+    private float countDown;
 
+    private bool tension = false;
     private bool dead = false;
     #endregion
 
@@ -26,105 +27,201 @@ public class GameMusic : MonoBehaviour
     {
         instance = this;
 
-        // Initialize volumes
-        MusicNone.volume = 0;
-        MusicDanger.volume = 0;
-        MusicAction.volume = 0;
+        Music1.volume = 0;
 
-        MaxVolume = PlayerPrefs.GetFloat("GameMusicVolume", 0.5f);
+        AudioListener.volume = 0;
+
+        MaxVolume = PlayerPrefs.GetFloat("GameMusicVolume");
     }
 
     private void Start()
     {
-        SetMusicGroups();
-        SwitchState(MusicState.Action); // Default to action state
-    }
+        Music1.outputAudioMixerGroup = Game.instance.audioSource.outputAudioMixerGroup;
+        Music2.outputAudioMixerGroup = Game.instance.audioSource.outputAudioMixerGroup;
 
-    private void SetMusicGroups()
-    {
-        var audioGroup = Game.instance.audioSource.outputAudioMixerGroup;
-        MusicNone.outputAudioMixerGroup = audioGroup;
-        MusicDanger.outputAudioMixerGroup = audioGroup;
-        MusicAction.outputAudioMixerGroup = audioGroup;
+        if (Music1.enabled)
+            Music1.Play();
+
+        Music1.volume = 0;
     }
     #endregion
 
-    #region STATE MANAGEMENT
-    public void TriggerDanger()
+    #region METHODS
+
+    public void SenseTension()
     {
-        if (currentState != MusicState.Danger && !dead)
+        StartCoroutine(Tension());
+    }
+
+    public void ZeroTension()
+    {
+        StartCoroutine(CalmTension());
+    }
+
+    private IEnumerator Tension()
+    {
+        while (Music1.volume < MaxVolume)
         {
-            SwitchState(MusicState.Danger);
+            Music1.volume += Time.deltaTime;
+
+            if (Music1.volume == 1.0 || Music1.volume > MaxVolume)
+            {
+                Music1.volume = MaxVolume;
+
+                tension = true;
+                yield break;
+            }
+
+            yield return null;
         }
+    }
+
+    private IEnumerator CalmTension()
+    {
+        while (Music1.volume > 0)
+        {
+            Music1.volume -= Time.deltaTime;
+
+            if (Music1.volume == 0.0)
+            {
+                tension = false;
+                yield break;
+            }
+
+            yield return null;
+        }
+    }
+
+    public void Ingozi()
+    {
+        countDown = 12;
+
+        if (!ingozi && !dead)
+        {
+            if (ShopKeeping.instance)
+                ShopKeeping.instance.Scare();
+
+            StartCoroutine(FadeToDanger());
+            ingozi = true;
+        }
+
+        GameProgress.instance.introSwitchInterrupted = true;
     }
 
     public void Death()
     {
         if (!dead)
         {
-            StopAllMusic();
-            PlayClip(MusicDanger, DeathMusic, 0.33f, loop: false);
+            if (Music1.clip)
+            {
+                Music1.Stop();
+                Music2.Stop();
+            }
+
+            Music1.volume = 0.33f;
+            Music1.clip = DeathMusic;
+
+            if (Music1.enabled == false)
+                Music1.enabled = true;
+
+            Music1.loop = false;
+            Music1.Play();
+
             dead = true;
         }
     }
 
-    private void SwitchState(MusicState newState)
+    private void SetMaxVolume(float x)
     {
-        if (currentState == newState) return;
+        MaxVolume = x;
 
-        StopAllMusic();
-
-        currentState = newState;
-        switch (newState)
+        if (ingozi)
         {
-            case MusicState.None:
-                break;
-            case MusicState.Action:
-                PlayClip(MusicAction, loop: true);
-                break;
-            case MusicState.Danger:
-                PlayClip(MusicDanger, loop: true);
-                break;
+            Music2.volume = MaxVolume;
         }
-    }
-
-    private void PlayClip(AudioSource source, AudioClip clip = null, float volume = -1, bool loop = true)
-    {
-        if (clip != null)
-            source.clip = clip;
-        source.volume = volume >= 0 ? volume : MaxVolume;
-        source.loop = loop;
-        source.Play();
-    }
-
-    private void StopAllMusic()
-    {
-        MusicNone.Stop();
-        MusicDanger.Stop();
-        MusicAction.Stop();
+        else
+        {
+            if (tension)
+            {
+                Music1.volume = MaxVolume;
+            }
+        }
     }
     #endregion
 
-    #region UTILITIES
-    public void SetMaxVolume(float x)
+    #region COROUTINES
+    private IEnumerator FadeToDanger()
     {
-        MaxVolume = x;
-        if (currentState != MusicState.None)
+        while (true)
         {
-            GetCurrentSource().volume = MaxVolume;
+            Music1.volume -= Time.deltaTime;
+
+            if (Music2.volume < MaxVolume) 
+            { 
+                Music2.volume += Time.deltaTime; 
+            }
+
+            if (Music1.volume == 0)
+            {
+                StartCoroutine(CountDown());
+                yield break;
+            }
+
+            yield return null;
         }
     }
 
-    private AudioSource GetCurrentSource()
+    public void ForceChill()
     {
-        switch (currentState)
+        Invoke(nameof(DoForceChill), 1);
+    }
+
+    private void DoForceChill()
+    {
+        countDown = 0;
+    }
+
+    private IEnumerator CountDown()
+    {
+        while (true)
         {
-            case MusicState.Action:
-                return MusicAction;
-            case MusicState.Danger:
-                return MusicDanger;
-            default:
-                return null;
+            countDown--;
+
+            if (countDown == 0)
+            {
+                if (!dead)
+                {
+                    StartCoroutine(FadeToChill());
+                    yield break;
+                }
+            }
+
+            yield return new WaitForSeconds(1);
+        }
+    }
+
+    private IEnumerator FadeToChill()
+    {
+        while (true)
+        {
+            if (Music1.volume < MaxVolume)
+            {
+                Music1.volume += Time.deltaTime;
+            }
+
+            Music2.volume -= Time.deltaTime;
+
+            if (Music2.volume == 0)
+            {
+                ingozi = false;
+
+                if (ShopKeeping.instance)
+                    ShopKeeping.instance.Recover();
+
+                yield break;
+            }
+
+            yield return null;
         }
     }
     #endregion
