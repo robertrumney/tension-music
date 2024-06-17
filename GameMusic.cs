@@ -61,47 +61,6 @@ public class GameMusic : MonoBehaviour
         StartCoroutine(CalmTension());
     }
 
-    private IEnumerator Tension()
-    {
-        // Gradually increase the volume of Music1 to MaxVolume
-        while (Music1.volume < MaxVolume)
-        {
-            Music1.volume += Time.deltaTime * 0.1f;
-
-            // Clamp the volume to MaxVolume and set tension
-            if (Music1.volume == 1.0 || Music1.volume > MaxVolume)
-            {
-                Music1.volume = MaxVolume;
-                tensionTarget = MaxVolume;
-
-                tension = true;
-                yield break;
-            }
-
-            yield return null;
-        }
-    }
-
-    private IEnumerator CalmTension()
-    {
-        // Gradually decrease the volume of Music1 to 0
-        while (Music1.volume > 0)
-        {
-            Music1.volume -= Time.deltaTime * 0.1f;
-
-            // Set tension to false when volume reaches 0
-            if (Music1.volume == 0.0)
-            {
-                tensionTarget = 0;
-
-                tension = false;
-                yield break;
-            }
-
-            yield return null;
-        }
-    }
-
     public void Danger()
     {
         // Set countdown to 12 seconds
@@ -173,6 +132,47 @@ public class GameMusic : MonoBehaviour
     {
         // Reset the countdown to 0
         countDown = 0;
+    }
+
+        private IEnumerator Tension()
+    {
+        // Gradually increase the volume of Music1 to MaxVolume
+        while (Music1.volume < MaxVolume)
+        {
+            Music1.volume += Time.deltaTime * 0.1f;
+
+            // Clamp the volume to MaxVolume and set tension
+            if (Music1.volume == 1.0 || Music1.volume > MaxVolume)
+            {
+                Music1.volume = MaxVolume;
+                tensionTarget = MaxVolume;
+
+                tension = true;
+                yield break;
+            }
+
+            yield return null;
+        }
+    }
+
+    private IEnumerator CalmTension()
+    {
+        // Gradually decrease the volume of Music1 to 0
+        while (Music1.volume > 0)
+        {
+            Music1.volume -= Time.deltaTime * 0.1f;
+
+            // Set tension to false when volume reaches 0
+            if (Music1.volume == 0.0)
+            {
+                tensionTarget = 0;
+
+                tension = false;
+                yield break;
+            }
+
+            yield return null;
+        }
     }
 
     private IEnumerator FadeToDanger()
