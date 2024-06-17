@@ -18,6 +18,7 @@ public class GameMusic : MonoBehaviour
 
     // Maximum volume for the music
     public float MaxVolume = 1;
+    
     // Speed at which the music fades in and out
     public float musicFadeSpeed = 5;
 
@@ -45,10 +46,6 @@ public class GameMusic : MonoBehaviour
 
     private void Start()
     {
-        // Set the audio output mixer groups
-        Music1.outputAudioMixerGroup = Game.instance.audioSource.outputAudioMixerGroup;
-        Music2.outputAudioMixerGroup = Game.instance.audioSource.outputAudioMixerGroup;
-
         // Play the music if it is enabled
         if (Music1.enabled)
             Music1.Play();
@@ -236,10 +233,6 @@ public class GameMusic : MonoBehaviour
             if (Music2.volume == 0)
             {
                 ingozi = false;
-
-                if (ShopKeeping.instance)
-                    ShopKeeping.instance.Recover();
-
                 yield break;
             }
 
