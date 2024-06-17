@@ -126,7 +126,7 @@ public class GameMusic : MonoBehaviour
         }
     }
 
-    private void SetMaxVolume(float x)
+    public void SetMaxVolume(float x)
     {
         MaxVolume = x;
 
@@ -141,6 +141,16 @@ public class GameMusic : MonoBehaviour
                 Music1.volume = MaxVolume;
             }
         }
+    }
+
+    public void ForceChill()
+    {
+        Invoke(nameof(DoForceChill), 1);
+    }
+
+    private void DoForceChill()
+    {
+        countDown = 0;
     }
 
     private IEnumerator FadeToDanger()
@@ -163,16 +173,6 @@ public class GameMusic : MonoBehaviour
 
             yield return null;
         }
-    }
-
-    public void ForceChill()
-    {
-        Invoke(nameof(DoForceChill), 1);
-    }
-
-    private void DoForceChill()
-    {
-        countDown = 0;
     }
 
     private IEnumerator CountDown()
