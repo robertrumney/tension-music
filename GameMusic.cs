@@ -4,20 +4,27 @@ using System.Collections;
 public class GameMusic : MonoBehaviour
 {
     #region VARS AND REFS
+    // Singleton instance of the GameMusic class
     public static GameMusic instance;
 
+    // Audio sources for game music
     public AudioSource Music1;
     public AudioSource Music2;
     public AudioClip DeathMusic;
 
+    // Flag to check if danger music is playing
     [System.NonSerialized]
     public bool ingozi = false;
 
+    // Maximum volume for the music
     public float MaxVolume = 1;
+    // Speed at which the music fades in and out
     public float musicFadeSpeed = 5;
 
+    // Countdown timer for danger music
     private float countDown;
 
+    // Flags to check the current state of the music
     private bool tension = false;
     private bool dead = false;
     #endregion
@@ -25,34 +32,41 @@ public class GameMusic : MonoBehaviour
     #region INIT
     private void Awake()
     {
+        // Set the instance to this object
         instance = this;
 
+        // Set initial volume levels
         Music1.volume = 0;
-
         AudioListener.volume = 0;
 
+        // Load the max volume from player preferences
         MaxVolume = PlayerPrefs.GetFloat("GameMusicVolume");
     }
 
     private void Start()
     {
+        // Set the audio output mixer groups
         Music1.outputAudioMixerGroup = Game.instance.audioSource.outputAudioMixerGroup;
         Music2.outputAudioMixerGroup = Game.instance.audioSource.outputAudioMixerGroup;
 
+        // Play the music if it is enabled
         if (Music1.enabled)
             Music1.Play();
 
+        // Reset the volume to 0
         Music1.volume = 0;
     }
     #endregion
 
     #region METHODS
 
+    // Start the tension music
     public void SenseTension()
     {
         StartCoroutine(Tension());
     }
 
+    // Stop the tension music
     public void ZeroTension()
     {
         StartCoroutine(CalmTension());
@@ -60,6 +74,7 @@ public class GameMusic : MonoBehaviour
 
     private IEnumerator Tension()
     {
+        // Gradually increase the volume of Music1 to the maximum volume
         while (Music1.volume < MaxVolume)
         {
             Music1.volume += Time.deltaTime;
@@ -67,7 +82,6 @@ public class GameMusic : MonoBehaviour
             if (Music1.volume == 1.0 || Music1.volume > MaxVolume)
             {
                 Music1.volume = MaxVolume;
-
                 tension = true;
                 yield break;
             }
@@ -78,6 +92,7 @@ public class GameMusic : MonoBehaviour
 
     private IEnumerator CalmTension()
     {
+        // Gradually decrease the volume of Music1 to 0
         while (Music1.volume > 0)
         {
             Music1.volume -= Time.deltaTime;
@@ -92,6 +107,7 @@ public class GameMusic : MonoBehaviour
         }
     }
 
+    // Start the danger music
     public void Ingozi()
     {
         countDown = 12;
@@ -108,6 +124,7 @@ public class GameMusic : MonoBehaviour
         GameProgress.instance.introSwitchInterrupted = true;
     }
 
+    // Start the death music
     public void Death()
     {
         if (!dead)
@@ -131,6 +148,7 @@ public class GameMusic : MonoBehaviour
         }
     }
 
+    // Set the maximum volume for the music
     private void SetMaxVolume(float x)
     {
         MaxVolume = x;
@@ -152,6 +170,7 @@ public class GameMusic : MonoBehaviour
     #region COROUTINES
     private IEnumerator FadeToDanger()
     {
+        // Gradually fade Music1 out and Music2 in
         while (true)
         {
             Music1.volume -= Time.deltaTime;
@@ -171,6 +190,7 @@ public class GameMusic : MonoBehaviour
         }
     }
 
+    // Force the music to calm down
     public void ForceChill()
     {
         Invoke(nameof(DoForceChill), 1);
@@ -183,6 +203,7 @@ public class GameMusic : MonoBehaviour
 
     private IEnumerator CountDown()
     {
+        // Countdown before fading to calm music
         while (true)
         {
             countDown--;
@@ -202,6 +223,7 @@ public class GameMusic : MonoBehaviour
 
     private IEnumerator FadeToChill()
     {
+        // Gradually fade Music2 out and Music1 in
         while (true)
         {
             if (Music1.volume < MaxVolume)
