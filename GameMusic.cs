@@ -3,28 +3,23 @@ using System.Collections;
 
 public class GameMusic : MonoBehaviour
 {
-    #region VARS AND REFS
     public static GameMusic instance;
 
     public AudioSource Music1;
     public AudioSource Music2;
     public AudioClip DeathMusic;
 
-    [System.NonSerialized]
-    public bool ingozi = false;
-
     public float MaxVolume = 1;
     public float musicFadeSpeed = 5;
 
     private float countDown;
 
-    private float music1Target = 0;
+    private float tensionTarget = 0;
 
     private bool tension = false;
+    private bool danger = false;
     private bool dead = false;
-    #endregion
 
-    #region INIT
     private void Awake()
     {
         instance = this;
@@ -46,9 +41,6 @@ public class GameMusic : MonoBehaviour
 
         Music1.volume = 0;
     }
-    #endregion
-
-    #region METHODS
 
     public void SenseTension()
     {
@@ -69,7 +61,7 @@ public class GameMusic : MonoBehaviour
             if (Music1.volume == 1.0 || Music1.volume > MaxVolume)
             {
                 Music1.volume = MaxVolume;
-                music1Target = MaxVolume;
+                tensionTarget = MaxVolume;
 
                 tension = true;
                 yield break;
@@ -87,7 +79,7 @@ public class GameMusic : MonoBehaviour
 
             if (Music1.volume == 0.0)
             {
-                music1Target = 0;
+                tensionTarget = 0;
 
                 tension = false;
                 yield break;
@@ -97,20 +89,18 @@ public class GameMusic : MonoBehaviour
         }
     }
 
-    public void Ingozi()
+    public void Danger()
     {
         countDown = 12;
 
-        if (!ingozi && !dead)
+        if (!danger && !dead)
         {
             if (ShopKeeping.instance)
                 ShopKeeping.instance.Scare();
 
             StartCoroutine(FadeToDanger());
-            ingozi = true;
+            danger = true;
         }
-
-        GameProgress.instance.introSwitchInterrupted = true;
     }
 
     public void Death()
@@ -140,7 +130,7 @@ public class GameMusic : MonoBehaviour
     {
         MaxVolume = x;
 
-        if (ingozi)
+        if (danger)
         {
             Music2.volume = MaxVolume;
         }
@@ -152,9 +142,7 @@ public class GameMusic : MonoBehaviour
             }
         }
     }
-    #endregion
 
-    #region COROUTINES
     private IEnumerator FadeToDanger()
     {
         while (true)
@@ -167,7 +155,7 @@ public class GameMusic : MonoBehaviour
                 Music2.volume = MaxVolume;
                 Music1.volume = 0;
 
-                music1Target = 1;
+                tensionTarget = 1;
 
                 StartCoroutine(CountDown());
                 yield break;
@@ -210,25 +198,20 @@ public class GameMusic : MonoBehaviour
     {
         while (true)
         {
-            if (Music1.volume != music1Target)
+            if (Music1.volume != tensionTarget)
             {
-                Music1.volume = Mathf.MoveTowards(Music1.volume, music1Target, Time.deltaTime * 0.5f);
+                Music1.volume = Mathf.MoveTowards(Music1.volume, tensionTarget, Time.deltaTime * 0.5f);
             }
 
             Music2.volume -= Time.deltaTime;
 
-            if (Music2.volume == 0 && Music1.volume == music1Target)
+            if (Music2.volume == 0 && Music1.volume == tensionTarget)
             {
-                ingozi = false;
-
-                if (ShopKeeping.instance)
-                    ShopKeeping.instance.Recover();
-
+                danger = false;
                 yield break;
             }
 
             yield return null;
         }
     }
-    #endregion
 }
