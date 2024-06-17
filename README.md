@@ -8,7 +8,6 @@ This Unity script manages the background music for a game, including tension, da
 - Controls multiple audio sources for different types of game music.
 - Smooth volume transitions for tension, danger, and death music.
 - Adjustable maximum volume based on player preferences.
-- Integration with other game systems such as `ShopKeeping` and `GameProgress`.
 
 ## Installation
 
